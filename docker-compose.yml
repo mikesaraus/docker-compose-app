@@ -1,0 +1,86 @@
+version: "3.3"
+
+services:
+  db:
+    container_name: app-db
+    image: mariadb:latest
+    restart: always
+    ports:
+       - "${PORT_DB}:3306"
+    environment:
+      TZ: ${TIMEZONE}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PWD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_USER_PWD}
+    tty: true
+    volumes:
+      - "${DATA_DB}:/var/lib/mysql:rw"
+    hostname: app-db
+    networks:
+      app_net:
+        ipv4_address: 10.1.0.2
+
+  phpmyadmin:
+    container_name: app-dbadmin
+    image: phpmyadmin/phpmyadmin:latest
+    depends_on:
+      - db
+    ports:
+      - "${PORT_PHPMYADMIN}:80"
+    restart: always
+    environment:
+      TZ: ${TIMEZONE}
+      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PWD}
+    tty: true
+    hostname: app-dbadmin
+    networks:
+      app_net:
+        ipv4_address: 10.1.0.3
+
+  api:
+    container_name: app-api
+    image: w0am1/expressjs:tzdata
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "${PORT_API}:80"
+    working_dir: /home
+    environment:
+      TZ: ${TIMEZONE}
+    volumes:
+      - "${DATA_API}:/home:rw"
+    tty: true
+    entrypoint: ["sh", "-c", "apk update && apk upgrade && sh"]
+    hostname: app-api
+    networks:
+      app_net:
+        ipv4_address: 10.1.0.8
+
+  app:
+    container_name: app-ui
+    image: w0am1/quasar:tzdata
+    restart: always
+    ports:
+      - "${PORT_APP}:80"
+    working_dir: /home
+    environment:
+      TZ: ${TIMEZONE}
+    volumes:
+      - "${DATA_APP}:/home:rw"
+    tty: true
+    entrypoint: ["sh", "-c", "apk update && apk upgrade && sh"]
+    hostname: app-ui
+    networks:
+      app_net:
+        ipv4_address: 10.1.0.9
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      config: 
+        - subnet: 10.1.0.0/16
+
