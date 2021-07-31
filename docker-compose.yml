@@ -16,6 +16,7 @@ services:
     tty: true
     volumes:
       - "${DATA_DB}:/var/lib/mysql:rw"
+      #- "./database.sql:/docker-entrypoint-initdb.d/sql_dump_file.sql:rw" #import Database
     hostname: app-db
     networks:
       app_net:
@@ -53,7 +54,7 @@ services:
     volumes:
       - "${DATA_API}:/home:rw"
     tty: true
-    entrypoint: ["sh", "-c", "apk update && apk upgrade && sh"]
+    entrypoint: ["sh", "-c", "apk update && apk upgrade || npm install || npm start && sh"]
     hostname: app-api
     networks:
       app_net:
@@ -71,7 +72,7 @@ services:
     volumes:
       - "${DATA_APP}:/home:rw"
     tty: true
-    entrypoint: ["sh", "-c", "apk update && apk upgrade && sh"]
+    entrypoint: ["sh", "-c", "apk update && apk upgrade && npm install && sed -i s/8080/80/ quasar.conf.js || quasar dev && sh"]
     hostname: app-ui
     networks:
       app_net:
@@ -83,4 +84,3 @@ networks:
     ipam:
       config: 
         - subnet: 10.1.0.0/16
-
